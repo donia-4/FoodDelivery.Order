@@ -100,6 +100,7 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<IEventPublisher, RabbitMqPublisher>();
+        services.AddScoped<IOutbox, EfOutbox>();
 
         return services;
     }
