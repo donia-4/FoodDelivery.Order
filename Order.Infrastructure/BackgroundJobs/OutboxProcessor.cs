@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Order.Application.Common.Interfaces.Messaging;
+using Order.Infrastructure.Data;
 
 namespace Order.Infrastructure.BackgroundJobs;
 
@@ -46,7 +47,7 @@ public sealed class OutboxProcessor : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
 
-        var dbContext = scope.ServiceProvider.GetRequiredService<RestaurantDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
         var publisher = scope.ServiceProvider.GetRequiredService<IEventPublisher>();
 
         await using var transaction = await dbContext.Database
