@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Restaurant.Domain.Results.Abstractions;
+using Order.Domain.Results.Abstractions;
 
 namespace Order.Domain.Results
 {
