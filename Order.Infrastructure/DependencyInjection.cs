@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Order.Application.Common.Interfaces.Messaging;
 using Order.Application.Common.Interfaces.Services;
+using Order.Infrastructure.BackgroundJobs;
 using Order.Infrastructure.Data;
 using Order.Infrastructure.Data.Interceptors;
 using Order.Infrastructure.RabbitMQ;
@@ -101,6 +102,9 @@ public static class DependencyInjection
 
         services.AddSingleton<IEventPublisher, RabbitMqPublisher>();
         services.AddScoped<IOutbox, EfOutbox>();
+
+        // Background worker that polls the outbox table and publishes to RabbitMQ
+        services.AddHostedService<OutboxProcessor>();
 
         return services;
     }
