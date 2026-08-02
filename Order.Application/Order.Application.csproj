@@ -18,8 +18,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Common\IntegrationEvents\" />
-	  <Folder Include="Common\Interfaces\Repositories\" />
-	  <Folder Include="Features\" />
 	</ItemGroup>
 
 </Project>
