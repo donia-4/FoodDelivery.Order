@@ -18,11 +18,33 @@ namespace Order.API
                 .AddAppHealthChecks(configuration)
                 .AddExceptionHandling()
                 .AddCustomProblemDetails()
-                .AddAppRateLimiting();
+                .AddAppRateLimiting()
+                .AddHttpClients(configuration);
 
             return services;
         }
+        private static IServiceCollection AddHttpClients(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            // Identity Service 
+            services.AddHttpClient("IdentityService", client =>
+            {
+                client.BaseAddress = new Uri(
+                    configuration["Services:IdentityBaseUrl"]!); // https://identityservices.runasp.net
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
 
+            // Restaurant Service 
+            services.AddHttpClient("RestaurantService", client =>
+            {
+                client.BaseAddress = new Uri(
+                    configuration["Services:RestaurantBaseUrl"]!); // https://localhost:7126
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
+
+            return services;
+        }
         private static IServiceCollection AddApiDocumentation(
             this IServiceCollection services)
         {
@@ -32,7 +54,7 @@ namespace Order.API
             {
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    Title = "Restaurant Service API"
+                    Title = "Order Service API"
                 });
             });
 
