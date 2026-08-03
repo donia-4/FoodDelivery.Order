@@ -6,11 +6,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Order.Application.Common.Interfaces.Messaging;
+using Order.Application.Common.Interfaces.Repositories;
 using Order.Application.Common.Interfaces.Services;
 using Order.Infrastructure.BackgroundJobs;
 using Order.Infrastructure.Data;
 using Order.Infrastructure.Data.Interceptors;
 using Order.Infrastructure.RabbitMQ;
+using Order.Infrastructure.Repositories;
 using Order.Infrastructure.Services;
 using Order.Infrastructure.Settings;
 using RabbitMQ.Client;
@@ -28,7 +30,9 @@ public static class DependencyInjection
             .AddCaching()
             .AddCloudinary(configuration)
             .AddRabbitMq(configuration)
-            .AddRepositories();
+            .AddRepositories()
+            .AddServices()
+            .AddHttpClients(configuration);
 
         return services;
     }
@@ -115,14 +119,50 @@ public static class DependencyInjection
 
         services.AddScoped<ICacheService, HybridCacheService>();
 
-        services.AddScoped<IFileService, CloudinaryFileService>();
-
         return services;
     }
 
     private static IServiceCollection AddRepositories(
         this IServiceCollection services)
     {
+        services.AddScoped<IOrderRepository, OrderRepository>();
+
+        return services;
+    }
+    private static IServiceCollection AddServices(
+        this IServiceCollection services)
+    {
+        services.AddScoped<IFileService, CloudinaryFileService>();
+        services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IRestaurantService, RestaurantService>();
+
+        return services;
+    }
+    private static IServiceCollection AddHttpClients(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddHttpContextAccessor(); // ← we can access HttpContext through it
+
+        // Identity Service
+        services.AddHttpClient("IdentityService", client =>
+        {
+            client.BaseAddress = new Uri(
+                configuration["Services:IdentityBaseUrl"]!);
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+        })
+        .AddHttpMessageHandler<AuthHeaderHandler>(); // ← بيضيف التوكن أوتوماتيك
+
+        // Restaurant Service
+        services.AddHttpClient("RestaurantService", client =>
+        {
+            client.BaseAddress = new Uri(
+                configuration["Services:RestaurantBaseUrl"]!);
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+        })
+        .AddHttpMessageHandler<AuthHeaderHandler>();
+
+        services.AddScoped<AuthHeaderHandler>();
 
         return services;
     }
