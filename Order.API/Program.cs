@@ -42,6 +42,8 @@ app.UseOutputCache();
 
 app.MapHealthChecks("/health");
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
