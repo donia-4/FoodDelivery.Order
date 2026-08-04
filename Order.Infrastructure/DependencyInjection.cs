@@ -1,10 +1,12 @@
-﻿using CloudinaryDotNet;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Order.Application.Common.Interfaces.Messaging;
 using Order.Application.Common.Interfaces.Repositories;
 using Order.Application.Common.Interfaces.Services;
@@ -28,38 +30,16 @@ public static class DependencyInjection
         services
             .AddDatabase(configuration)
             .AddCaching()
-            .AddCloudinary(configuration)
             .AddRabbitMq(configuration)
             .AddRepositories()
             .AddServices()
-            .AddHttpClients(configuration);
+            .AddHttpClients(configuration)
+            .AddJwtAuthentication(configuration)
+            .AddJwtAuthorization();
 
         return services;
     }
 
-    private static IServiceCollection AddCloudinary(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        services.Configure<CloudinarySettings>(
-            configuration.GetSection("Cloudinary"));
-
-        services.AddSingleton(sp =>
-        {
-            var settings = sp
-                .GetRequiredService<IOptions<CloudinarySettings>>()
-                .Value;
-
-            var account = new Account(
-                settings.CloudName,
-                settings.ApiKey,
-                settings.ApiSecret);
-
-            return new Cloudinary(account);
-        });
-
-        return services;
-    }
 
     private static IServiceCollection AddDatabase(
         this IServiceCollection services,
@@ -133,7 +113,6 @@ public static class DependencyInjection
     private static IServiceCollection AddServices(
         this IServiceCollection services)
     {
-        services.AddScoped<IFileService, CloudinaryFileService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IRestaurantService, RestaurantService>();
 
@@ -164,6 +143,69 @@ public static class DependencyInjection
         .AddHttpMessageHandler<AuthHeaderHandler>();
 
         services.AddScoped<AuthHeaderHandler>();
+
+        return services;
+    }
+    private static IServiceCollection AddJwtAuthentication(
+    this IServiceCollection services,
+    IConfiguration configuration)
+    {
+        var jwtSettings = configuration
+            .GetSection(JwtSettings.SectionName)
+            .Get<JwtSettings>()
+            ?? throw new InvalidOperationException(
+                $"Configuration section '{JwtSettings.SectionName}' is missing.");
+
+        services
+            .AddOptions<JwtSettings>()
+            .Bind(configuration.GetSection(JwtSettings.SectionName))
+            .ValidateOnStart();
+
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSettings.Issuer,
+
+                    ValidateAudience = true,
+                    ValidAudiences = jwtSettings.Audience,
+
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+
+                    ValidateLifetime = true,
+
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+        return services;
+    }
+
+    private static IServiceCollection AddJwtAuthorization(
+        this IServiceCollection services)
+    {
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("Authenticated",
+                policy => policy.RequireAuthenticatedUser());
+
+            options.AddPolicy("AdminOnly",
+                policy => policy.RequireRole("Admin"));
+
+            options.AddPolicy("RestaurantOwnerOnly",
+                policy => policy.RequireRole("RestaurantOwner"));
+
+            options.AddPolicy("CustomerOnly",
+                policy => policy.RequireRole("Customer"));
+        });
 
         return services;
     }
