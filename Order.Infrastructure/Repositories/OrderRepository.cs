@@ -20,7 +20,6 @@ public sealed class OrderRepository : IOrderRepository
     public async Task<Domain.Orders.Order?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return await _context.Orders
-            .AsNoTracking()
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted, ct);
     }
 
