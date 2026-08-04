@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using Order.Application.Common.Interfaces.Repositories;
 using Order.Application.Common.Interfaces.Services;
 using Order.Application.Features.Orders.Dtos.GetOrderDetails;
@@ -11,22 +12,55 @@ namespace Order.Application.Features.Orders.Queries.GetOrderDetails;
 public sealed class GetOrderDetailsQueryHandler(
     IOrderRepository orderRepository,
     IIdentityService identityService,
-    IRestaurantService restaurantService)
+    IRestaurantService restaurantService,
+    ILogger<GetOrderDetailsQueryHandler> logger)
     : IRequestHandler<GetOrderDetailsQuery, Result<OrderDetailsDto>>
 {
     public async Task<Result<OrderDetailsDto>> Handle(
         GetOrderDetailsQuery request,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation(
+            "Fetching order details for OrderId: {OrderId}",
+            request.Id);
+
         var order = await orderRepository.GetByIdWithItemsAsync(
             request.Id,
             cancellationToken);
 
         if (order is null)
+        {
+            logger.LogWarning(
+                "Order with Id {OrderId} was not found.",
+                request.Id);
+
             return OrderErrors.NotFound;
+        }
 
         var customer = await identityService.GetUserAsync(order.CustomerId, cancellationToken);
+        if (customer is null)
+        {
+            logger.LogWarning(
+                "Customer with Id {CustomerId} for Order {OrderId} was not found in Identity Service.",
+                order.CustomerId,
+                order.Id);
+        }
+
         var restaurantName = await restaurantService.GetRestaurantNameAsync(order.RestaurantId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(restaurantName))
+        {
+            logger.LogWarning(
+                "Restaurant with Id {RestaurantId} for Order {OrderId} was not found in Restaurant Service.",
+                order.RestaurantId,
+                order.Id);
+        }
+
+        if (order.Items.Count == 0)
+        {
+            logger.LogWarning(
+                "Order {OrderId} has no items.",
+                order.Id);
+        }
 
         var dto = new OrderDetailsDto(
             order.Id,
@@ -59,6 +93,10 @@ public sealed class GetOrderDetailsQueryHandler(
                 h.ChangedDate
             )).ToList()
         );
+
+        logger.LogInformation(
+            "Order {OrderId} retrieved successfully.",
+            order.Id);
 
         return dto;
     }

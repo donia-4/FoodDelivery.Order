@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using Order.Application.Common.Interfaces.Repositories;
 using Order.Application.Common.Interfaces.Services;
 using Order.Domain.Orders;
@@ -9,6 +10,7 @@ namespace Order.Application.Features.Orders.Commands.UpdateOrderStatusByAdmin;
 
 public sealed class UpdateOrderStatusByAdminCommandHandler(
     IOrderRepository orderRepository,
+    ILogger<UpdateOrderStatusByAdminCommandHandler> logger,
     ICacheService cacheService)
     : IRequestHandler<UpdateOrderStatusByAdminCommand, Result<Updated>>
 {
@@ -16,12 +18,22 @@ public sealed class UpdateOrderStatusByAdminCommandHandler(
         UpdateOrderStatusByAdminCommand request,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation(
+            "Handling UpdateOrderStatusByAdminCommand for OrderId: {OrderId}, NewStatus: {NewStatus}, ChangedBy: {ChangedBy}",
+            request.OrderId, request.NewStatus, request.ChangedBy);
+
         var order = await orderRepository.GetByIdAsync(
             request.OrderId,
             cancellationToken);
 
         if (order is null)
+        {
+            logger.LogWarning(
+                "Order with Id {OrderId} was not found.",
+                request.OrderId);
+
             return OrderErrors.NotFound;
+        }
 
         Result<Updated> result = request.NewStatus switch
         {
@@ -41,6 +53,10 @@ public sealed class UpdateOrderStatusByAdminCommandHandler(
 
         orderRepository.Update(order);
         await orderRepository.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Order with Id {OrderId} status updated to {NewStatus} by {ChangedBy}.",
+            order.Id, request.NewStatus, request.ChangedBy);
 
         await InvalidateCacheAsync(order, cancellationToken);
 
