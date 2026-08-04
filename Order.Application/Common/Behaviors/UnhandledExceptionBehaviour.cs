@@ -2,7 +2,7 @@
 
 using Microsoft.Extensions.Logging;
 
-namespace Order.Application.Common.Behaviours;
+namespace Order.Application.Common.Behaviors;
 
 public class UnhandledExceptionBehaviour<TRequest, TResponse>(ILogger<TRequest> logger)
     : IPipelineBehavior<TRequest, TResponse>

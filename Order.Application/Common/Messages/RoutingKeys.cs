@@ -8,6 +8,8 @@ namespace Order.Application.Common.Messages
 {
     public static class RoutingKeys
     {
+        public const string OrderCreated = "order.created";
+
         //public const string RestaurantRequested =  
         //"restaurant.requested";
 

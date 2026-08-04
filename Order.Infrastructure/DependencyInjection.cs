@@ -126,6 +126,7 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<ICartRepository, CartRepository>();
 
         return services;
     }
