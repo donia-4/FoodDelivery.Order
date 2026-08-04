@@ -107,12 +107,6 @@ namespace Order.API
                             .AllowAnyHeader()
                             .AllowAnyMethod();
                     }
-                    else
-                    {
-                        builder.AllowAnyOrigin()
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
-                    }
                 });
             });
 
