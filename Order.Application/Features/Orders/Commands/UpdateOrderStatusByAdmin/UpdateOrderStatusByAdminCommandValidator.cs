@@ -10,9 +10,6 @@ public class UpdateOrderStatusByAdminCommandValidator : AbstractValidator<Update
         RuleFor(x => x.OrderId)
             .NotEmpty();
 
-        RuleFor(x => x.ChangedBy)
-            .NotEmpty()
-            .MaximumLength(200);
 
         RuleFor(x => x.NewStatus)
             .IsInEnum()
