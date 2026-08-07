@@ -12,9 +12,8 @@ public sealed class UpdateOrderStatusByAdminCommandHandler(
     IOrderRepository orderRepository,
     IOrderStatusHistoryRepository orderStatusHistoryRepository,
     ICacheService cacheService,
-    ICurrentUserService currentUserService)
-    ILogger<UpdateOrderStatusByAdminCommandHandler> logger,
-    ICacheService cacheService)
+    ICurrentUserService currentUserService,
+    ILogger<UpdateOrderStatusByAdminCommandHandler> logger)
     : IRequestHandler<UpdateOrderStatusByAdminCommand, Result<Updated>>
 {
     public async Task<Result<Updated>> Handle(
@@ -25,7 +24,7 @@ public sealed class UpdateOrderStatusByAdminCommandHandler(
 
         logger.LogInformation(
             "Handling UpdateOrderStatusByAdminCommand for OrderId: {OrderId}, NewStatus: {NewStatus}, ChangedBy: {ChangedBy}",
-            request.OrderId, request.NewStatus, request.ChangedBy);
+            request.OrderId, request.NewStatus, userId);
 
         var order = await orderRepository.GetByIdAsync(
             request.OrderId,
@@ -78,7 +77,7 @@ public sealed class UpdateOrderStatusByAdminCommandHandler(
 
         logger.LogInformation(
             "Order with Id {OrderId} status updated to {NewStatus} by {ChangedBy}.",
-            order.Id, request.NewStatus, request.ChangedBy);
+            order.Id, request.NewStatus, userId);
 
         await InvalidateCacheAsync(order, cancellationToken);
 
