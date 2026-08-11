@@ -1,8 +1,6 @@
 ﻿using System.Reflection;
 using FluentValidation;
 using Order.Application.Common.Behaviors;
-using Order.Application.Common.Behaviours;
-using Restaurant.Application.Common.Behaviours;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

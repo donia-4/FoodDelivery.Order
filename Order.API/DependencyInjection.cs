@@ -1,6 +1,9 @@
+﻿using System.Text;
+using System.Threading.RateLimiting;
 ﻿using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Order.API.Middlewares;
 
@@ -15,6 +18,7 @@ namespace Order.API
             services
                 .AddApiDocumentation()
                 .AddAppCors(configuration)
+                .AddAppAuthentication(configuration)
                 .AddAppOutputCaching()
                 .AddAppHealthChecks(configuration)
                 .AddExceptionHandling()
@@ -24,11 +28,38 @@ namespace Order.API
 
             return services;
         }
+
+        private static IServiceCollection AddAppAuthentication(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = configuration["Jwt:Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = configuration["Jwt:Audience"],
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(configuration["Jwt:SigningKey"] ?? string.Empty)),
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.FromMinutes(1)
+                    };
+                });
+
+            services.AddAuthorization();
+
+            return services;
+        }
         private static IServiceCollection AddHttpClients(
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // Identity Service 
+            
             services.AddHttpClient("IdentityService", client =>
             {
                 client.BaseAddress = new Uri(
@@ -36,7 +67,6 @@ namespace Order.API
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
 
-            // Restaurant Service 
             services.AddHttpClient("RestaurantService", client =>
             {
                 client.BaseAddress = new Uri(

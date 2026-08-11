@@ -86,11 +86,11 @@ public sealed class Cart : AuditableEntity
     {
         if (_items.Count == 0) return CartErrors.EmptyCart;
 
-        var subTotal = _items.Sum(i => i.Total);
-
+        // subTotal starts at 0 - AddItem below is what accumulates it per item.
+        // Passing the pre-summed total here as well would double it.
         var orderResult = Orders.Order.Create(
             orderId, orderNumber, CustomerId, RestaurantId, addressId,
-            subTotal, deliveryFee, tax, discount, notes);
+            subTotal: 0m, deliveryFee, tax, discount, notes);
 
         if (orderResult.IsError) return orderResult.Errors;
 

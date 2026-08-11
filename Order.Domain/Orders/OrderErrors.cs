@@ -16,6 +16,10 @@ public static class OrderErrors
     public static readonly Error CannotModifyAfterConfirmation = Error.Conflict("Order.Modify.AfterConfirmation", "Cannot modify order after confirmation.");
     public static readonly Error CannotCancel = Error.Conflict("Order.Cancel.NotAllowed", "Order cannot be cancelled at this stage.");
     public static readonly Error NotFound = Error.NotFound("Order.NotFound", "Order was not found.");
+    public static readonly Error RestaurantNotFound = Error.NotFound("Order.Restaurant.NotFound", "Restaurant was not found or is not available.");
+    public static readonly Error MenuItemNotFound = Error.NotFound("Order.MenuItem.NotFound", "One or more menu items were not found.");
+    public static readonly Error MenuItemUnavailable = Error.Conflict("Order.MenuItem.Unavailable", "One or more menu items are currently unavailable.");
+    public static readonly Error MenuItemFromDifferentRestaurant = Error.Validation("Order.MenuItem.RestaurantMismatch", "One or more menu items do not belong to the selected restaurant.");
     public static readonly Error EmptyItems = Error.Validation("Order.Items.Empty", "Order must contain at least one item.");
     public static readonly Error ItemNotFound = Error.NotFound("Order.Item.NotFound", "Item not found in this order.");
 }

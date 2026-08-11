@@ -29,5 +29,26 @@ public sealed class RestaurantService : IRestaurantService
         return restaurant?.Name;
     }
 
+    public async Task<MenuItemInfo?> GetMenuItemAsync(
+        Guid menuItemId, CancellationToken ct = default)
+    {
+        var response = await _httpClient.GetAsync(
+            $"/api/menu-items/{menuItemId}", ct);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var menuItem = await response.Content
+            .ReadFromEnvelopeAsync<MenuItemResponse>(ct);
+
+        if (menuItem is null)
+            return null;
+
+        return new MenuItemInfo(
+            menuItemId, menuItem.RestaurantId, menuItem.Name, menuItem.Price, menuItem.IsAvailable);
+    }
+
     private record RestaurantResponse(string Name);
+
+    private record MenuItemResponse(Guid RestaurantId, string Name, decimal Price, bool IsAvailable);
 }
