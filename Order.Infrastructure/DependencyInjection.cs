@@ -107,6 +107,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOrderStatusHistoryRepository, OrderStatusHistoryRepository>();
+        services.AddScoped<ICartRepository, CartRepository>(); 
 
         return services;
     }
