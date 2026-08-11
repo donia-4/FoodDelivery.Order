@@ -106,7 +106,7 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddScoped<IOrderRepository, OrderRepository>();
-        services.AddScoped<ICartRepository, CartRepository>();
+        services.AddScoped<IOrderStatusHistoryRepository, OrderStatusHistoryRepository>();
 
         return services;
     }
@@ -115,6 +115,8 @@ public static class DependencyInjection
     {
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IRestaurantService, RestaurantService>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
 
         return services;
     }

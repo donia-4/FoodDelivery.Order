@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using Order.Application.Common.Interfaces.Repositories;
 using Order.Application.Common.Interfaces.Services;
 using Order.Domain.Orders;
@@ -8,6 +9,7 @@ namespace Order.Application.Features.Orders.Commands.RejectOrder;
 
 public sealed class RejectOrderCommandHandler(
     IOrderRepository orderRepository,
+    ILogger<RejectOrderCommandHandler> logger,
     ICacheService cacheService)
     : IRequestHandler<RejectOrderCommand, Result<Updated>>
 {
@@ -15,12 +17,24 @@ public sealed class RejectOrderCommandHandler(
         RejectOrderCommand request,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation(
+            "Rejecting order with Id: {OrderId} by user: {ChangedBy} for reason: {Reason}",
+            request.OrderId,
+            request.ChangedBy,
+            request.Reason);
+
         var order = await orderRepository.GetByIdAsync(
             request.OrderId,
             cancellationToken);
 
         if (order is null)
+        {
+            logger.LogWarning(
+                "Order with Id {OrderId} was not found.",
+                request.OrderId);
+
             return OrderErrors.NotFound;
+        }
 
         var result = order.Reject(request.ChangedBy, request.Reason);
         if (result.IsError)
@@ -28,6 +42,12 @@ public sealed class RejectOrderCommandHandler(
 
         orderRepository.Update(order);
         await orderRepository.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Order with Id: {OrderId} has been rejected by user: {ChangedBy} for reason: {Reason}",
+            request.OrderId,
+            request.ChangedBy,
+            request.Reason);
 
         await InvalidateCacheAsync(order, cancellationToken);
 

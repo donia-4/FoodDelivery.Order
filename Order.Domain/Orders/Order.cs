@@ -160,7 +160,7 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.Pending)
             return OrderErrors.InvalidStatusTransition;
 
-        return TransitionTo(OrderStatus.Accepted, changedBy);
+        return TransitionTo(OrderStatus.Accepted);
     }
 
     public Result<Updated> Reject(string changedBy, string? reason = null)
@@ -168,7 +168,7 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.Pending)
             return OrderErrors.InvalidStatusTransition;
 
-        return TransitionTo(OrderStatus.Rejected, changedBy);
+        return TransitionTo(OrderStatus.Rejected);
     }
 
     public Result<Updated> StartPreparing(string changedBy)
@@ -176,7 +176,7 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.Accepted)
             return OrderErrors.InvalidStatusTransition;
 
-        return TransitionTo(OrderStatus.Preparing, changedBy);
+        return TransitionTo(OrderStatus.Preparing);
     }
 
     public Result<Updated> MarkReady(string changedBy)
@@ -184,7 +184,7 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.Preparing)
             return OrderErrors.InvalidStatusTransition;
 
-        return TransitionTo(OrderStatus.Ready, changedBy);
+        return TransitionTo(OrderStatus.Ready);
     }
 
     public Result<Updated> MarkOutForDelivery(string changedBy)
@@ -192,7 +192,7 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.Ready)
             return OrderErrors.InvalidStatusTransition;
 
-        return TransitionTo(OrderStatus.OutForDelivery, changedBy);
+        return TransitionTo(OrderStatus.OutForDelivery);
     }
 
     public Result<Updated> MarkDelivered(string changedBy)
@@ -200,7 +200,7 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.OutForDelivery)
             return OrderErrors.InvalidStatusTransition;
 
-        return TransitionTo(OrderStatus.Delivered, changedBy);
+        return TransitionTo(OrderStatus.Delivered);
     }
 
     public Result<Updated> Complete(string changedBy)
@@ -208,7 +208,7 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.Delivered)
             return OrderErrors.InvalidStatusTransition;
 
-        return TransitionTo(OrderStatus.Completed, changedBy);
+        return TransitionTo(OrderStatus.Completed);
     }
 
     public Result<Updated> Cancel(string changedBy, string? reason = null)
@@ -216,18 +216,12 @@ public sealed class Order : AuditableEntity
         if (Status != OrderStatus.Pending && Status != OrderStatus.Accepted)
             return OrderErrors.CannotCancel;
 
-        return TransitionTo(OrderStatus.Cancelled, changedBy);
+        return TransitionTo(OrderStatus.Cancelled);
     }
 
-    private Result<Updated> TransitionTo(OrderStatus newStatus, string changedBy)
+    private Result<Updated> TransitionTo(OrderStatus newStatus)
     {
-        var oldStatus = Status;
         Status = newStatus;
-
-        var history = OrderStatusHistory.Create(Guid.NewGuid(), Id, oldStatus, Status, changedBy);
-        if (history.IsError) return history.Errors;
-
-        _statusHistory.Add(history.Value);
         return Result.Updated;
     }
 }
