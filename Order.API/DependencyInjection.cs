@@ -18,7 +18,7 @@ namespace Order.API
             services
                 .AddApiDocumentation()
                 .AddAppCors(configuration)
-                .AddAppAuthentication(configuration)
+                //.AddAppAuthentication(configuration)
                 .AddAppOutputCaching()
                 .AddAppHealthChecks(configuration)
                 .AddExceptionHandling()
