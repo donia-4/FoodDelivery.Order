@@ -1,5 +1,5 @@
 ﻿using MediatR;
-namespace Restaurant.Application.Common.Behaviours;
+namespace Order.Application.Common.Behaviors;
 using FluentValidation;
 using Order.Domain.Results;
 using Order.Domain.Results.Abstractions;
