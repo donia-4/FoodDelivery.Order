@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+﻿using System.Text.Json.Serialization;
 using Order.Application.Common.Interfaces.Services;
 using Order.Infrastructure.Services;
 
@@ -22,7 +22,6 @@ public sealed class RestaurantService : IRestaurantService
         if (!response.IsSuccessStatusCode)
             return null;
 
-        // بيقرأ الـ Envelope ويستخرج الـ Data
         var restaurant = await response.Content
             .ReadFromEnvelopeAsync<RestaurantResponse>(ct);
 
@@ -32,8 +31,9 @@ public sealed class RestaurantService : IRestaurantService
     public async Task<MenuItemInfo?> GetMenuItemAsync(
         Guid menuItemId, CancellationToken ct = default)
     {
+        // ✅ التصحيح هنا: الـ endpoint الحقيقي هو /api/foods/{id}
         var response = await _httpClient.GetAsync(
-            $"/api/menu-items/{menuItemId}", ct);
+            $"/api/foods/{menuItemId}", ct);
 
         if (!response.IsSuccessStatusCode)
             return null;
@@ -45,10 +45,20 @@ public sealed class RestaurantService : IRestaurantService
             return null;
 
         return new MenuItemInfo(
-            menuItemId, menuItem.RestaurantId, menuItem.Name, menuItem.Price, menuItem.IsAvailable);
+            menuItemId,
+            menuItem.RestaurantId,
+            menuItem.Name,
+            menuItem.Price,
+            menuItem.IsAvailable);
     }
 
-    private record RestaurantResponse(string Name);
+    private record RestaurantResponse(
+        [property: JsonPropertyName("name")] string Name);
 
-    private record MenuItemResponse(Guid RestaurantId, string Name, decimal Price, bool IsAvailable);
+    private record MenuItemResponse(
+        [property: JsonPropertyName("id")] Guid Id,
+        [property: JsonPropertyName("restaurantId")] Guid RestaurantId,
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("price")] decimal Price,
+        [property: JsonPropertyName("isAvailable")] bool IsAvailable);
 }
