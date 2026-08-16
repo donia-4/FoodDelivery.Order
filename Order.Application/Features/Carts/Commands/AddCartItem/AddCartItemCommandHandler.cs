@@ -45,29 +45,38 @@ public sealed class AddCartItemCommandHandler(
         }
         else if (cart.RestaurantId != request.RestaurantId)
         {
-            // Switching restaurants with items already in the cart is rejected by
-            // Cart.ChangeRestaurant (CartErrors.HasItems) - the customer needs to
-            // clear their cart first rather than silently mixing restaurants.
             var changeResult = cart.ChangeRestaurant(request.RestaurantId);
             if (changeResult.IsError)
                 return changeResult.Errors;
         }
 
-        var itemResult = CartItem.Create(
-            Guid.NewGuid(), cart.Id, request.MenuItemId, request.RestaurantId,
-            request.Quantity, unitPrice, request.Notes);
+        var existingItem = cart.Items.FirstOrDefault(i => i.MenuItemId == request.MenuItemId);
 
-        if (itemResult.IsError)
-            return itemResult.Errors;
+        if (existingItem is not null)
+        {
+            var updateResult = existingItem.UpdateQuantity(existingItem.Quantity + request.Quantity);
+            if (updateResult.IsError)
+                return updateResult.Errors;
+        }
+        else
+        {
+            var itemResult = CartItem.Create(
+                Guid.NewGuid(), cart.Id, request.MenuItemId, request.RestaurantId,
+                request.Quantity, unitPrice, request.Notes);
 
-        var addResult = cart.AddItem(itemResult.Value);
-        if (addResult.IsError)
-            return addResult.Errors;
+            if (itemResult.IsError)
+                return itemResult.Errors;
+
+            if (itemResult.Value.RestaurantId != cart.RestaurantId)
+                return CartErrors.ItemFromDifferentRestaurant;
+
+            cart.AddItem(itemResult.Value);
+
+            await cartRepository.AddItemAsync(itemResult.Value, cancellationToken);
+        }
 
         if (isNewCart)
             await cartRepository.AddAsync(cart, cancellationToken);
-        else
-            cartRepository.Update(cart);
 
         await cartRepository.SaveChangesAsync(cancellationToken);
 

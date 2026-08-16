@@ -1,4 +1,6 @@
-﻿namespace Order.Application.Common.Interfaces.Repositories;
+﻿using Order.Domain.Carts;
+
+namespace Order.Application.Common.Interfaces.Repositories;
 
 public interface ICartRepository
 {
@@ -9,5 +11,6 @@ public interface ICartRepository
     void Update(Domain.Carts.Cart cart);
     void Remove(Domain.Carts.Cart cart);
     Task ClearAsync(Guid cartId, CancellationToken ct = default);
+    Task AddItemAsync(CartItem item, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

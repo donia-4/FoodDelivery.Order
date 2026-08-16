@@ -49,8 +49,14 @@ public sealed class CartRepository : ICartRepository
     }
     public async Task ClearAsync(Guid cartId, CancellationToken ct = default)
     {
-        await _context.CartItems
+        var items = await _context.CartItems
             .Where(i => i.CartId == cartId)
-            .ExecuteDeleteAsync(ct);
+            .ToListAsync(ct);
+
+        _context.CartItems.RemoveRange(items);
+    }
+    public async Task AddItemAsync(CartItem item, CancellationToken ct = default)
+    {
+        await _context.CartItems.AddAsync(item, ct);
     }
 }
