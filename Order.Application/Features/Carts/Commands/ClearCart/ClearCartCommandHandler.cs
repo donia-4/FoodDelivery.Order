@@ -14,9 +14,10 @@ public sealed class ClearCartCommandHandler(ICartRepository cartRepository)
         if (cart is null)
             return Result.Updated;
 
-        cart.Clear();
+        await cartRepository.ClearAsync(cart.Id, cancellationToken);
 
-        cartRepository.Update(cart);
+        cartRepository.Remove(cart);
+
         await cartRepository.SaveChangesAsync(cancellationToken);
 
         return Result.Updated;
